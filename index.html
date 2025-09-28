@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Revisão – Redes de Computadores (UNIDADE I)</title>
+  <style>
+    :root {
+      --bg: #0b0f14; --card:#121923; --muted:#7e8b9f; --text:#e7eefc; --accent:#6cc4ff; --accent2:#8ef0a5;
+      --danger:#ff7979;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Helvetica,Arial,"Apple Color Emoji","Segoe UI Emoji";background:var(--bg);color:var(--text)}
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:16px}
+    .title{font-size:clamp(18px,2.4vw,28px);font-weight:700;letter-spacing:.3px}
+    .controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+    select,input,button{border:1px solid #283343;background:#0f1520;color:var(--text);padding:10px 12px;border-radius:12px}
+    input::placeholder{color:#99a7bd}
+    button{cursor:pointer;transition:.15s ease;box-shadow:0 1px 0 #000 inset, 0 0 0 0 rgba(255,255,255,.06) inset}
+    button:hover{transform:translateY(-1px)}
+    .btn-primary{background:linear-gradient(180deg,#1a2433,#111a27);border-color:#2b3a52}
+    .btn-ghost{background:transparent;border-color:#263347}
+    .btn-danger{background:#3a1517;border-color:#6b1c22}
+    .badge{font-size:12px;color:#b6c6df;padding:4px 8px;border:1px solid #273246;border-radius:999px}
+
+    .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+    .card{grid-column:span 12;background:var(--card);border:1px solid #1b2636;border-radius:20px;padding:16px}
+    @media(min-width:920px){.sidebar{grid-column:span 4}.main{grid-column:span 8}}
+
+    .list{display:grid;gap:12px}
+    .qa{background:#0d141f;border:1px solid #1a2740;padding:14px;border-radius:14px}
+    .qa h3{margin:0 0 8px 0;font-size:16px}
+    .qa .a{margin-top:8px;color:#c7d7ef}
+    .muted{color:var(--muted)}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;background:#0e1623;border:1px solid #1d2a40;padding:4px 8px;border-radius:999px}
+
+    .flash{display:flex;flex-direction:column;gap:12px}
+    .flash .card-big{background:linear-gradient(180deg,#0f1826,#0d1521);border:1px solid #1b2942;border-radius:24px;padding:24px}
+    .flash .q{font-size:18px}
+    .flash .meta{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+    .quiz{display:flex;flex-direction:column;gap:12px}
+    .options{display:grid;gap:10px}
+    .option{background:#0e1623;border:1px solid #1d2a40;padding:12px;border-radius:12px;cursor:pointer}
+    .option.correct{outline:2px solid var(--accent2)}
+    .option.wrong{outline:2px solid var(--danger)}
+
+    .footer{margin-top:24px;color:#92a4bf;font-size:12px}
+    .kbd{border:1px solid #3b4a66;border-bottom-width:2px;background:#0a0f18;padding:2px 6px;border-radius:6px;}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">📘 Revisão – Redes de Computadores (UNIDADE I)</div>
+      <div class="controls">
+        <select id="aulaFilter" title="Filtrar por aula">
+          <option value="all">Todas as aulas</option>
+        </select>
+        <input id="search" type="search" placeholder="Buscar por palavra-chave (ex.: TCP, ARP, topologia)…" />
+        <select id="mode">
+          <option value="lista">Lista Q&A</option>
+          <option value="flash">Flashcards</option>
+          <option value="quiz">Quiz</option>
+        </select>
+        <button id="shuffle" class="btn-ghost" title="Embaralhar">🔀</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <aside class="card sidebar">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <strong>Resumo</strong>
+          <span class="badge" id="countBadge">0 itens</span>
+        </div>
+        <div class="muted" style="margin-top:8px;line-height:1.5">
+          • Conteúdo dividido por AULA 1–8
+          <br/>• Três modos de estudo: <b>Lista</b>, <b>Flashcards</b> e <b>Quiz</b>
+          <br/>• Use <span class="kbd">/</span> para focar a busca e <span class="kbd">N</span>/<span class="kbd">P</span> nos flashcards
+        </div>
+        <hr style="border-color:#1b2636;margin:16px 0"/>
+        <div class="muted">Progresso (local)</div>
+        <div id="progress" class="muted" style="margin-top:6px"></div>
+      </aside>
+
+      <main class="card main" id="content"></main>
+    </div>
+
+    <div class="footer">Baseado no material de UNIDADE I fornecido pelo(a) professor(a). App gerado para uso acadêmico.</div>
+  </div>
+
+<script>
+// ===========================
+// Dados (extraídos do PDF)
+// ===========================
+const DATA = [
+  { aula: 1, q: "O que é uma rede de computadores?", a: "Conjunto de dispositivos interligados que compartilham dados, recursos e serviços." },
+  { aula: 1, q: "Por que usamos redes de computadores?", a: "Compartilhamento de recursos, comunicação eficiente e suporte a sistemas distribuídos." },
+  { aula: 1, q: "Quais são os principais tipos de redes?", a: "LAN, MAN, WAN, WLAN e PAN." },
+  { aula: 1, q: "O que caracteriza uma LAN?", a: "Rede limitada a área pequena, como escritório ou residência." },
+  { aula: 1, q: "O que é um host em uma rede?", a: "Dispositivo capaz de se comunicar através da rede, enviando/recebendo dados." },
+  { aula: 1, q: "Exemplos de hosts", a: "Computadores, servidores, roteadores, impressoras de rede, celulares e dispositivos IoT." },
+  { aula: 1, q: "Função de um roteador", a: "Direcionar o tráfego de dados entre diferentes redes." },
+  { aula: 1, q: "Diferença entre hub e switch", a: "Hub repete sinais para todas as portas; switch encaminha apenas ao destino correto." },
+  { aula: 1, q: "Topologia em estrela", a: "Todos os dispositivos conectados a um ponto central (hub/switch)." },
+  { aula: 1, q: "Topologia em barramento", a: "Todos os dispositivos conectados a um único cabo compartilhado (barramento)." },
+  { aula: 1, q: "Aplicações práticas – corporativas", a: "Intranets, videoconferências, compartilhamento de arquivos." },
+  { aula: 1, q: "Aplicações práticas – domésticas", a: "Acesso à internet, streaming, automação residencial." },
+  { aula: 1, q: "Importância da ARPANET", a: "Primeiro protótipo da Internet (1969), comutação de pacotes." },
+
+  // Aula 2
+  { aula: 2, q: "O que é comunicação de dados?", a: "Troca de dados entre dispositivos via meio de transmissão." },
+  { aula: 2, q: "Componentes da comunicação de dados", a: "Emissores, receptores, meio de transmissão e mensagem." },
+  { aula: 2, q: "Sinal analógico", a: "Contínuo, variando amplitude, frequência ou fase." },
+  { aula: 2, q: "Sinal digital", a: "Valores discretos (0 e 1)." },
+  { aula: 2, q: "Exemplos analógicos", a: "Som, velocímetro analógico, termômetro de mercúrio, TV analógica." },
+  { aula: 2, q: "Exemplos digitais", a: "Redes de computadores, TV digital, streaming, telefonia celular." },
+  { aula: 2, q: "Meios guiados", a: "Par trançado, coaxial, fibra óptica." },
+  { aula: 2, q: "Meios não guiados", a: "Rádio, micro-ondas, infravermelho." },
+  { aula: 2, q: "Frequência", a: "Ciclos por segundo (Hz)." },
+  { aula: 2, q: "Modos de transmissão", a: "Simplex, Half-duplex, Full-duplex." },
+  { aula: 2, q: "Largura de banda", a: "Capacidade máxima de transmissão (bps, Kbps, Mbps, Gbps)." },
+  { aula: 2, q: "Latência vs Throughput", a: "Latência: tempo de ida; Throughput: dados úteis por tempo." },
+
+  // Aula 3
+  { aula: 3, q: "O que é topologia de rede?", a: "Disposição física ou lógica dos dispositivos e conexões." },
+  { aula: 3, q: "Principais topologias", a: "Barramento, Anel, Estrela, Malha, Árvore, Híbrida." },
+  { aula: 3, q: "Como funciona barramento?", a: "Todos compartilham um cabo central." },
+  { aula: 3, q: "Vantagens do barramento", a: "Baixo custo, fácil instalação, simples expandir." },
+  { aula: 3, q: "Desvantagens do barramento", a: "Colisões, baixa escalabilidade, dependência do cabo." },
+  { aula: 3, q: "Como funciona anel?", a: "Nós em círculo, dados em um único sentido, token." },
+  { aula: 3, q: "Vantagens do anel", a: "Ordem clara, desempenho previsível, igualdade de acesso." },
+  { aula: 3, q: "Topologia em estrela (característica)", a: "Todos conectados a um ponto central." },
+  { aula: 3, q: "Estrela – prós e contras", a: "Pró: fácil instalar/isolamento de falhas. Contra: ponto central é SPOF." },
+  { aula: 3, q: "Malha", a: "Vários caminhos p/ redundância." },
+  { aula: 3, q: "Árvore", a: "Combina estrela e barramento em hierarquia." },
+  { aula: 3, q: "Híbrida", a: "Combina 2+ topologias para cenários complexos." },
+
+  // Aula 4
+  { aula: 4, q: "O que é o Modelo OSI?", a: "Estrutura de 7 camadas para padronizar comunicações." },
+  { aula: 4, q: "Quem criou o OSI?", a: "ISO, para interoperabilidade entre fabricantes." },
+  { aula: 4, q: "As 7 camadas", a: "Física, Enlace, Rede, Transporte, Sessão, Apresentação, Aplicação." },
+  { aula: 4, q: "Função da Física", a: "Transmitir bits crus pelo meio físico." },
+  { aula: 4, q: "Exemplos da Física", a: "Cabos, hubs, repetidores, padrões Ethernet físico." },
+  { aula: 4, q: "Função da Enlace", a: "Entrega sem erros na LAN usando endereços MAC." },
+  { aula: 4, q: "Subcamadas da Enlace", a: "LLC e MAC." },
+  { aula: 4, q: "Protocolos de Enlace", a: "Ethernet, Wi‑Fi, PPP, HDLC." },
+  { aula: 4, q: "Função da Rede", a: "Roteamento e endereçamento lógico (IP)." },
+  { aula: 4, q: "Protocolos da Rede", a: "IP, ICMP, IGMP, ARP, RIP, OSPF, BGP." },
+  { aula: 4, q: "O que é ARP?", a: "Mapeia IP (Camada 3) para MAC (Camada 2)." },
+  { aula: 4, q: "Importância do OSI", a: "Padronização e interoperabilidade." },
+
+  // Aula 5
+  { aula: 5, q: "Objetivo da Camada de Transporte", a: "Entrega correta, completa e ordenada entre aplicações." },
+  { aula: 5, q: "Funções da Transporte", a: "Segmentação, controle de fluxo/erros, multiplexação, (não)conexão." },
+  { aula: 5, q: "TCP vs UDP", a: "TCP confiável/orientado à conexão; UDP rápido/sem garantia." },
+  { aula: 5, q: "Multiplexação (portas)", a: "Várias apps via portas lógicas (ex.: 80 HTTP, 25 SMTP)." },
+  { aula: 5, q: "Quem usa UDP?", a: "Streaming, games online, VoIP." },
+  { aula: 5, q: "Camada de Sessão – função", a: "Estabelecer, gerenciar e encerrar sessões." },
+  { aula: 5, q: "Sessão – sincronização", a: "Checkpoints para retomar após falha." },
+  { aula: 5, q: "Sessão – exemplos", a: "NetBIOS, RPC." },
+  { aula: 5, q: "Apresentação – função", a: "Traduz/transforma dados entre sistemas." },
+  { aula: 5, q: "Apresentação – funções", a: "Tradução, compressão, criptografia, multimídia." },
+  { aula: 5, q: "Apresentação – exemplos", a: "TLS/SSL, JPEG/PNG, MP3/MPEG, ASCII/EBCDIC." },
+  { aula: 5, q: "Aplicação – função", a: "Serviços para o usuário (web, e-mail, arquivos)." },
+
+  // Aula 6
+  { aula: 6, q: "O que é um protocolo de rede?", a: "Regras de transmissão: sintaxe, semântica e temporalidade." },
+  { aula: 6, q: "Transporte – principais protocolos", a: "TCP e UDP." },
+  { aula: 6, q: "Aplicação – exemplos", a: "HTTP/HTTPS, FTP, SMTP, DNS, DHCP, IMAP, POP3." },
+  { aula: 6, q: "Diferença TCP x UDP", a: "TCP confiável/ordenado; UDP mais rápido/sem garantia." },
+  { aula: 6, q: "Pacotes na Camada de Rede", a: "Contêm IP origem/destino, cabeçalho e dados." },
+  { aula: 6, q: "Quadros (frames) na Enlace", a: "Encapsulam pacotes IP com MACs, cabeçalho e CRC." },
+  { aula: 6, q: "Endereço MAC – função", a: "Identificar unicamente dispositivos na LAN." },
+  { aula: 6, q: "Encapsulamento", a: "Cada camada adiciona cabeçalhos/trailers formando segmentos/pacotes/quadros." },
+  { aula: 6, q: "SMTP/IMAP/POP3", a: "SMTP: envio; IMAP: sincroniza; POP3: baixa e remove." },
+  { aula: 6, q: "Campo ACK no TCP", a: "Confirma recebimento e próximo número de sequência." },
+  { aula: 6, q: "HTTP – métodos", a: "GET, POST, PUT, DELETE, HEAD, OPTIONS, CONNECT, TRACE, PATCH." },
+  { aula: 6, q: "HTTP x HTTPS", a: "HTTPS usa TLS/SSL para criptografia." },
+
+  // Aula 7
+  { aula: 7, q: "Origem do TCP/IP", a: "ARPANET (1969), Vinton Cerf e Robert Kahn." },
+  { aula: 7, q: "Objetivo do TCP/IP", a: "Rede descentralizada e confiável entre diferentes redes." },
+  { aula: 7, q: "Camadas TCP/IP", a: "Acesso à Rede, Internet, Transporte, Aplicação." },
+  { aula: 7, q: "OSI x TCP/IP", a: "OSI é conceitual; TCP/IP é prático e adotado na Internet." },
+  { aula: 7, q: "Encapsulamento (def)", a: "Adicionar cabeçalhos/trailers por camada antes da transmissão." },
+  { aula: 7, q: "Desencapsulamento", a: "Remover cabeçalhos por camada no destino." },
+  { aula: 7, q: "Principais protocolos TCP/IP", a: "IP, ICMP, TCP, UDP, ARP, DNS, HTTP, FTP, SMTP, DHCP." },
+  { aula: 7, q: "Função do IP", a: "Endereçamento lógico e roteamento." },
+  { aula: 7, q: "O que faz o ICMP?", a: "Mensagens de erro/diagnóstico (base do ping)." },
+  { aula: 7, q: "3-Way Handshake", a: "SYN → SYN+ACK → ACK para estabelecer conexão." },
+  { aula: 7, q: "O que é socket", a: "Ponto final definido por IP:Porta (ex.: 192.168.1.10:443)." },
+  { aula: 7, q: "Função do ARP", a: "Traduz IP em MAC para LAN." },
+
+  // Aula 8
+  { aula: 8, q: "Modos de transmissão", a: "Simplex, Half‑Duplex, Full‑Duplex." },
+  { aula: 8, q: "Simplex (característica)", a: "Somente uma direção (TV, rádio)." },
+  { aula: 8, q: "Half‑Duplex (característica)", a: "Ambos os sentidos, mas não simultâneo (walkie‑talkie)." },
+  { aula: 8, q: "Full‑Duplex (característica)", a: "Ambos os sentidos ao mesmo tempo (telefone)." },
+  { aula: 8, q: "Comutação de dados", a: "Encaminhar infos de origem a destino usando switches/roteadores." },
+  { aula: 8, q: "Tipos de comutação", a: "Circuitos, Pacotes, Mensagens." },
+  { aula: 8, q: "Comutação de circuitos", a: "Caminho dedicado antes da transmissão (telefonia)." },
+  { aula: 8, q: "Comutação de pacotes", a: "Dados divididos em pacotes independentes (Internet)." },
+  { aula: 8, q: "Comutação de mensagens", a: "Store-and-forward por nós com armazenamento (telegrafia)." },
+  { aula: 8, q: "Orientado à conexão vs sem conexão", a: "TCP estabelece ligação e garante ordem; UDP não garante." },
+  { aula: 8, q: "Vantagem do TCP", a: "Entrega confiável e ordenada." },
+  { aula: 8, q: "Analógico x Digital", a: "Analógico: contínuo. Digital: discreto, resistente a ruído." },
+];
+
+// ===============
+// Utilidades
+// ===============
+const $ = (q) => document.querySelector(q);
+const state = {
+  mode: localStorage.getItem('rev.mode') || 'lista',
+  aula: localStorage.getItem('rev.aula') || 'all',
+  q: '',
+  order: localStorage.getItem('rev.order') || 'asc',
+  seen: JSON.parse(localStorage.getItem('rev.seen')||'{}') // {"aula-q": true}
+};
+
+function saveState(){
+  localStorage.setItem('rev.mode', state.mode);
+  localStorage.setItem('rev.aula', state.aula);
+  localStorage.setItem('rev.order', state.order);
+  localStorage.setItem('rev.seen', JSON.stringify(state.seen));
+}
+
+function filtered(){
+  let rows = DATA;
+  if(state.aula !== 'all') rows = rows.filter(r=> String(r.aula)===String(state.aula));
+  if(state.q) {
+    const t = state.q.toLowerCase();
+    rows = rows.filter(r => r.q.toLowerCase().includes(t) || r.a.toLowerCase().includes(t));
+  }
+  if(state.order==='desc') rows = [...rows].reverse();
+  return rows;
+}
+
+function setProgress(){
+  const rows = filtered();
+  const seenInSet = rows.filter((r,i)=> state.seen[key(r,i)]).length;
+  const p = rows.length? Math.round(seenInSet/rows.length*100):0;
+  $('#progress').innerHTML = `${seenInSet}/${rows.length} vistos • ${p}%`;
+  $('#countBadge').textContent = `${rows.length} itens`;
+}
+
+function key(r,i){ return `${r.aula}-${i}-${r.q.slice(0,12)}`; }
+
+// ===============
+// Renderizadores
+// ===============
+function render(){
+  const c = $('#content');
+  const rows = filtered();
+  setProgress();
+  if(state.mode==='lista') return renderList(c, rows);
+  if(state.mode==='flash') return renderFlash(c, rows);
+  if(state.mode==='quiz') return renderQuiz(c, rows);
+}
+
+function renderList(node, rows){
+  node.innerHTML = '';
+  const list = document.createElement('div');
+  list.className = 'list';
+  rows.forEach((r,i)=>{
+    const qa = document.createElement('div'); qa.className='qa';
+    const h3 = document.createElement('h3'); h3.innerHTML = `AULA ${r.aula} · ${r.q}`;
+    const a = document.createElement('div'); a.className='a'; a.textContent = r.a;
+    qa.append(h3,a);
+    list.append(qa);
+  })
+  node.append(list);
+}
+
+// Flashcards
+let flashIndex = 0; let flashReveal = false; let flashOrder = [];
+function renderFlash(node, rows){
+  if(!flashOrder.length || flashOrder.length !== rows.length){
+    flashOrder = rows.map((_,i)=>i);
+    if(state.order==='desc') flashOrder.reverse();
+  }
+  const idx = flashOrder[flashIndex] ?? 0;
+  const r = rows[idx];
+  node.innerHTML = `
+    <div class="flash">
+      <div class="card-big">
+        <div class="meta">
+          <span class="pill">AULA ${r?.aula||'?'} </span>
+          <span class="pill">${flashIndex+1}/${rows.length}</span>
+        </div>
+        <div style="margin-top:12px" class="q"><strong>${r?.q||''}</strong></div>
+        <div id="flashAnswer" class="a" style="margin-top:10px;${flashReveal?'':'filter:blur(8px)'}">${r?.a||''}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn-primary" id="reveal">${flashReveal?'Ocultar':'Revelar'} resposta</button>
+        <button class="btn-ghost" id="prev">⟵ Anterior</button>
+        <button class="btn-ghost" id="next">Próxima ⟶</button>
+        <button class="btn-ghost" id="mark">Marcar como visto</button>
+        <button class="btn-ghost" id="reset">Reset progresso</button>
+      </div>
+    </div>`;
+  $('#reveal').onclick = ()=>{ flashReveal=!flashReveal; render(); };
+  $('#prev').onclick = ()=>{ flashIndex = (flashIndex-1+rows.length)%rows.length; flashReveal=false; render(); };
+  $('#next').onclick = ()=>{ flashIndex = (flashIndex+1)%rows.length; flashReveal=false; render(); };
+  $('#mark').onclick = ()=>{ state.seen[key(r,idx)] = true; saveState(); setProgress(); };
+  $('#reset').onclick = ()=>{ state.seen = {}; saveState(); render(); };
+}
+
+// Quiz (múltipla escolha)
+let quizIndex = 0; let quizScore = 0; let quizOrder = [];
+function renderQuiz(node, rows){
+  if(!quizOrder.length || quizOrder.length !== rows.length){
+    quizOrder = rows.map((_,i)=>i);
+    if(state.order==='desc') quizOrder.reverse();
+    quizIndex = 0; quizScore = 0;
+  }
+  const idx = quizOrder[quizIndex] ?? 0;
+  const qRow = rows[idx];
+  const distractors = pickDistractors(rows, qRow, 3).map(d=>d.a);
+  const options = shuffle([qRow.a, ...distractors]);
+
+  node.innerHTML = `
+    <div class="quiz">
+      <div class="pill">AULA ${qRow.aula} · ${quizIndex+1}/${rows.length}</div>
+      <h3 style="margin:8px 0 0 0">${qRow.q}</h3>
+      <div class="muted" style="margin-bottom:8px">Marque a alternativa correta</div>
+      <div class="options" id="opts"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+        <strong>Placar:</strong> <span id="score">${quizScore}</span>
+        <button id="skip" class="btn-ghost">Pular</button>
+        <button id="resetQuiz" class="btn-danger">Reiniciar Quiz</button>
+      </div>
+    </div>`;
+  const opts = $('#opts');
+  options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className='option';
+    btn.textContent = opt;
+    btn.onclick = ()=>{
+      const correct = opt === qRow.a;
+      btn.classList.add(correct? 'correct':'wrong');
+      if(correct){ quizScore++; $('#score').textContent = quizScore; state.seen[key(qRow, idx)] = true; saveState(); }
+      setTimeout(()=>{ quizIndex = (quizIndex+1)%rows.length; render(); }, 500);
+    }
+    opts.append(btn);
+  })
+  $('#skip').onclick = ()=>{ quizIndex = (quizIndex+1)%rows.length; render(); };
+  $('#resetQuiz').onclick = ()=>{ quizIndex = 0; quizScore = 0; render(); };
+}
+
+function pickDistractors(rows, correctRow, n){
+  const pool = rows.filter(r=> r!==correctRow);
+  return shuffle(pool).slice(0,n);
+}
+function shuffle(arr){ return [...arr].sort(()=>Math.random()-0.5); }
+
+// ===========================
+// Inicialização & eventos
+// ===========================
+function init(){
+  // Popular filtro de aulas
+  const aulas = [...new Set(DATA.map(r=>r.aula))].sort((a,b)=>a-b);
+  const sel = $('#aulaFilter');
+  aulas.forEach(a=>{
+    const o = document.createElement('option'); o.value = String(a); o.textContent = `AULA ${a}`; sel.append(o);
+  })
+  sel.value = state.aula;
+
+  // Estado inicial
+  $('#mode').value = state.mode;
+  render();
+
+  // Eventos
+  $('#mode').onchange = (e)=>{ state.mode = e.target.value; saveState(); render(); };
+  $('#aulaFilter').onchange = (e)=>{ state.aula = e.target.value; saveState(); render(); };
+  $('#search').oninput = (e)=>{ state.q = e.target.value; render(); };
+  $('#shuffle').onclick = ()=>{ state.order = state.order==='asc'?'desc':'asc'; saveState(); render(); };
+
+  // Atalhos: / foca busca, N/P navega flashcards
+  window.addEventListener('keydown', (ev)=>{
+    if(ev.key==='/' && document.activeElement!==$('#search')){ ev.preventDefault(); $('#search').focus(); }
+    if(state.mode==='flash'){
+      if(ev.key.toLowerCase()==='n'){ ev.preventDefault(); $('#next')?.click(); }
+      if(ev.key.toLowerCase()==='p'){ ev.preventDefault(); $('#prev')?.click(); }
+      if(ev.key===' '){ ev.preventDefault(); $('#reveal')?.click(); }
+    }
+  });
+}
+
+init();
+</script>
+</body>
+</html>
